@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.user;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.UserAuthDetails;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
@@ -47,6 +48,8 @@ public interface UserService extends EntityDaoService {
 
     User saveUser(TenantId tenantId, User user);
 
+    User saveUser(TenantId tenantId, User user, boolean doValidate);
+
     UserCredentials findUserCredentialsByUserId(TenantId tenantId, UserId userId);
 
     UserCredentials findUserCredentialsByActivateToken(TenantId tenantId, String activateToken);
@@ -54,6 +57,8 @@ public interface UserService extends EntityDaoService {
     UserCredentials findUserCredentialsByResetToken(TenantId tenantId, String resetToken);
 
     UserCredentials saveUserCredentials(TenantId tenantId, UserCredentials userCredentials);
+
+    UserCredentials saveUserCredentials(TenantId tenantId, UserCredentials userCredentials, boolean doValidate);
 
     UserCredentials activateUserCredentials(TenantId tenantId, String activateToken, String password);
 
@@ -68,6 +73,8 @@ public interface UserService extends EntityDaoService {
     UserCredentials checkUserActivationToken(TenantId tenantId, UserCredentials userCredentials);
 
     UserCredentials replaceUserCredentials(TenantId tenantId, UserCredentials userCredentials);
+
+    void deleteUserCredentials(TenantId tenantId, UserCredentials userCredentials);
 
     void deleteUser(TenantId tenantId, User user);
 
@@ -116,4 +123,10 @@ public interface UserService extends EntityDaoService {
     PageData<User> findUsersByFilter(TenantId tenantId, UsersFilter filter, PageLink pageLink);
 
     boolean matchesFilter(TenantId tenantId, SystemLevelUsersFilter filter, User user);
+
+    UserAuthDetails findUserAuthDetailsByUserId(TenantId tenantId, UserId userId);
+
+
+    List<User> findUsersByTenantIdAndIds(TenantId tenantId, List<UserId> userIds);
+
 }

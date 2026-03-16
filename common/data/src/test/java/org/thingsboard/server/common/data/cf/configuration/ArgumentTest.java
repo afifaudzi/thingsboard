@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,21 @@ public class ArgumentTest {
     }
 
     @Test
-    void validateShouldReturnTrueIfDynamicSourceConfigurationIsNotNull() {
+    void validateWhenRelationQuerySourceConfigurationIsNotNull() {
         var argument = new Argument();
         argument.setRefDynamicSourceConfiguration(new RelationPathQueryDynamicSourceConfiguration());
         assertThat(argument.hasDynamicSource()).isTrue();
+        assertThat(argument.hasRelationQuerySource()).isTrue();
+        assertThat(argument.hasOwnerSource()).isFalse();
+    }
+
+    @Test
+    void validateWhenCurrentOwnerSourceConfigurationIsNotNull() {
+        var argument = new Argument();
+        argument.setRefDynamicSourceConfiguration(new CurrentOwnerDynamicSourceConfiguration());
+        assertThat(argument.hasDynamicSource()).isTrue();
+        assertThat(argument.hasOwnerSource()).isTrue();
+        assertThat(argument.hasRelationQuerySource()).isFalse();
     }
 
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -45,20 +45,21 @@ import { isEqual } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-  selector: 'tb-entity-key-autocomplete',
-  templateUrl: './entity-key-autocomplete.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntityKeyAutocompleteComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => EntityKeyAutocompleteComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-entity-key-autocomplete',
+    templateUrl: './entity-key-autocomplete.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityKeyAutocompleteComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => EntityKeyAutocompleteComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Validator, OnChanges {
 
@@ -66,6 +67,7 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
 
   @Input() placeholder = this.translate.instant('action.set');
   @Input() requiredText = this.translate.instant('common.hint.key-required');
+  @Input() enableAutocomplete = true;
 
   entityFilter = input.required<EntityFilter>();
   dataKeyType = input.required<DataKeyType>();
@@ -81,12 +83,18 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
   keys$ = this.keyInputSubject.asObservable()
     .pipe(
       switchMap(() => {
+        if (!this.enableAutocomplete) {
+          return of([] as string[]);
+        }
         return this.cachedResult ? of(this.cachedResult) : this.entityService.findEntityKeysByQuery({
           pageLink: { page: 0, pageSize: 100 },
           entityFilter: this.entityFilter(),
-        }, this.dataKeyType() === DataKeyType.attribute, this.dataKeyType() === DataKeyType.timeseries, this.keyScopeType());
+        }, this.dataKeyType() === DataKeyType.attribute, this.dataKeyType() === DataKeyType.timeseries, this.keyScopeType(), {ignoreLoading: true});
       }),
       map(result => {
+        if (Array.isArray(result)) {
+          return result;
+        }
         this.cachedResult = result;
         switch (this.dataKeyType()) {
           case DataKeyType.attribute:
@@ -132,8 +140,10 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
       changes.dataKeyType.currentValue !== changes.dataKeyType.previousValue;
 
     if (filterChanged || keyScopeChanged || keyTypeChanged) {
-      this.keyControl.setValue('', {emitEvent: false});
       this.cachedResult = null;
+      if (!this.keyControl.disabled) {
+        this.keyControl.setValue('', {emitEvent: false});
+      }
     }
   }
 
@@ -152,10 +162,18 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
   registerOnTouched(_): void {}
 
   validate(): ValidationErrors | null {
-    return this.keyControl.valid ? null : { keyControl: false };
+    return this.keyControl.valid || this.keyControl.disabled ? null : { keyControl: false };
   }
 
   writeValue(value: string): void {
     this.keyControl.patchValue(value, {emitEvent: false});
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    if (isDisabled) {
+      this.keyControl.disable({emitEvent: false});
+    } else {
+      this.keyControl.enable({emitEvent: false});
+    }
   }
 }

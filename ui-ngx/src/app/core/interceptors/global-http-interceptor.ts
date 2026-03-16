@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -109,6 +109,10 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
       } else if (errorCode !== Constants.serverErrorCode.credentialsExpired) {
         unhandled = true;
       }
+    } else if (errorCode && errorCode === Constants.serverErrorCode.entitiesLimitExceeded) {
+      if (!ignoreErrors) {
+        this.dialogService.entitiesLimitExceeded(errorResponse.error);
+      }
     } else if (errorResponse.status === 429) {
       if (resendRequest) {
         return this.retryRequest(req, next);
@@ -124,6 +128,10 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
         if (!ignoreErrors) {
           this.showError(req.method + ': ' + req.url + '<br/>' +
             errorResponse.status + ': ' + errorResponse.statusText);
+        }
+      } else if (errorResponse.status === 504) {
+        if (!ignoreErrors) {
+          this.showError('Request timeout');
         }
       } else {
         unhandled = true;

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import {
   UntypedFormBuilder,
   UntypedFormGroup,
   ValidationErrors,
-  ValidatorFn
+  ValidatorFn, Validators
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -48,16 +48,17 @@ import { MatDialog } from '@angular/material/dialog';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Component({
-  selector: 'tb-api-usage-widget-settings',
-  templateUrl: './api-usage-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss', 'api-usage-widget-settings.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ApiUsageWidgetSettingsComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-api-usage-widget-settings',
+    templateUrl: './api-usage-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss', 'api-usage-widget-settings.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ApiUsageWidgetSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -140,7 +141,7 @@ export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
 
   protected onSettingsSet(settings: WidgetSettings) {
     this.apiUsageWidgetSettingsForm = this.fb.group({
-      dsEntityAliasId: [settings?.dsEntityAliasId],
+      dsEntityAliasId: [settings?.dsEntityAliasId, Validators.required],
       apiUsageDataKeys: this.prepareDataKeysFormArray(settings?.apiUsageDataKeys),
       targetDashboardState: [settings?.targetDashboardState],
       background: [settings?.background, []],
@@ -193,6 +194,7 @@ export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
           hideDataKeyColor: true,
           hideDataKeyDecimals: true,
           hideDataKeyUnits: true,
+          hideDataKeyAggregation: true,
           widget: this.widget,
           dashboard: null,
           dataKeySettingsForm: null,

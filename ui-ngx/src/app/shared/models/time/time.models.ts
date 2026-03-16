@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -169,6 +169,7 @@ export interface Timewindow {
   history?: HistoryWindow;
   aggregation?: Aggregation;
   timezone?: string;
+  hideSaveAsDefault?: boolean;
 }
 
 export interface SubscriptionAggregation extends Aggregation {
@@ -279,20 +280,20 @@ export const historyInterval = (timewindowMs: number): Timewindow => ({
   }
 });
 
-export const defaultTimewindow = (timeService: TimeService): Timewindow => {
+export const defaultTimewindow = (timeService: TimeService, isDashboard = false): Timewindow => {
   const currentTime = moment().valueOf();
   return {
     selectedTab: TimewindowType.REALTIME,
     realtime: {
       realtimeType: RealtimeWindowType.LAST_INTERVAL,
-      interval: SECOND,
-      timewindowMs: MINUTE,
+      interval: MINUTE,
+      timewindowMs: HOUR,
       quickInterval: QuickTimeInterval.CURRENT_DAY,
     },
     history: {
       historyType: HistoryWindowType.LAST_INTERVAL,
-      interval: SECOND,
-      timewindowMs: MINUTE,
+      interval: MINUTE,
+      timewindowMs: HOUR,
       fixedTimewindow: {
         startTimeMs: currentTime - DAY,
         endTimeMs: currentTime
@@ -300,8 +301,8 @@ export const defaultTimewindow = (timeService: TimeService): Timewindow => {
       quickInterval: QuickTimeInterval.CURRENT_DAY,
     },
     aggregation: {
-      type: AggregationType.AVG,
-      limit: Math.floor(timeService.getMaxDatapointsLimit() / 2)
+      type: isDashboard ? AggregationType.NONE : AggregationType.AVG ,
+      limit: isDashboard ? timeService.getMaxDatapointsLimit() : Math.floor(timeService.getMaxDatapointsLimit() / 2)
     }
   };
 };
@@ -315,8 +316,9 @@ const getTimewindowType = (timewindow: Timewindow): TimewindowType => {
 };
 
 export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalOnly: boolean,
-                                               historyOnly: boolean, timeService: TimeService, hasAggregation: boolean): Timewindow => {
-  const model = defaultTimewindow(timeService);
+                                               historyOnly: boolean, timeService: TimeService, hasAggregation: boolean,
+                                               isDashboard = false): Timewindow => {
+  const model = defaultTimewindow(timeService, isDashboard);
   if (value) {
     if (value.allowedAggTypes?.length) {
       model.allowedAggTypes = value.allowedAggTypes;
@@ -329,6 +331,9 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
     }
     if (value.hideTimezone) {
       model.hideTimezone = value.hideTimezone;
+    }
+    if (value.hideSaveAsDefault) {
+      model.hideSaveAsDefault = value.hideSaveAsDefault;
     }
 
     model.selectedTab = getTimewindowType(value);
@@ -1115,6 +1120,9 @@ export const cloneSelectedTimewindow = (timewindow: Timewindow): Timewindow => {
   if (timewindow.hideTimezone) {
     cloned.hideTimezone = timewindow.hideTimezone;
   }
+  if (timewindow.hideSaveAsDefault) {
+    cloned.hideSaveAsDefault = timewindow.hideSaveAsDefault;
+  }
   if (isDefined(timewindow.selectedTab)) {
     cloned.selectedTab = timewindow.selectedTab;
   }
@@ -1270,6 +1278,16 @@ export const defaultTimeIntervals = new Array<TimeInterval>(
     name: 'timeinterval.hours-interval',
     translateParams: {hours: 5},
     value: 5 * HOUR
+  },
+  {
+    name: 'timeinterval.hours-interval',
+    translateParams: {hours: 6},
+    value: 6 * HOUR
+  },
+  {
+    name: 'timeinterval.hours-interval',
+    translateParams: {hours: 8},
+    value: 8 * HOUR
   },
   {
     name: 'timeinterval.hours-interval',

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,10 +32,11 @@ import {
 } from '@home/components/widget/lib/settings/cards/api-usage-settings.component.models';
 
 @Component({
-  selector: 'tb-api-usage-widget',
-  templateUrl: './api-usage-widget.component.html',
-  styleUrls: ['api-usage-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-api-usage-widget',
+    templateUrl: './api-usage-widget.component.html',
+    styleUrls: ['api-usage-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ApiUsageWidgetComponent implements OnInit, OnDestroy {
 
@@ -91,11 +92,11 @@ export class ApiUsageWidgetComponent implements OnInit, OnDestroy {
         onDataUpdated: (subscription) => {
           const data = formattedDataFormDatasourceData(subscription.data);
           this.apiUsages.forEach(key => {
-            const progress = data[0][key.maxLimit.key] !== 0 ? Math.min(100, ((data[0][key.current.key] / data[0][key.maxLimit.key]) * 100)) : 0;
+            const progress = (this.isFiniteNumber(data[0][key.maxLimit.key]) && data[0][key.maxLimit.key] !== 0) ? Math.min(100, ((data[0][key.current.key] / data[0][key.maxLimit.key]) * 100)) : 0;
             key.progress = isFinite(progress) ? progress : 0;
             key.status.value = data[0][key.status.key] ? data[0][key.status.key].toLowerCase() : 'enabled';
-            key.maxLimit.value = isFinite(data[0][key.maxLimit.key]) && data[0][key.maxLimit.key] !== 0  ? this.toShortNumber(data[0][key.maxLimit.key]) : '∞';
-            key.current.value = isFinite(data[0][key.current.key]) ? this.toShortNumber(data[0][key.current.key]) : 0;
+            key.maxLimit.value = this.isFiniteNumber(data[0][key.maxLimit.key]) && data[0][key.maxLimit.key] !== 0 ? this.toShortNumber(data[0][key.maxLimit.key]) : '∞';
+            key.current.value = this.isFiniteNumber(data[0][key.current.key]) ? this.toShortNumber(data[0][key.current.key]) : 0;
           });
           this.cd.detectChanges();
         }
@@ -112,6 +113,10 @@ export class ApiUsageWidgetComponent implements OnInit, OnDestroy {
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
     this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
+  }
+
+  private isFiniteNumber(value: any): boolean {
+    return typeof value === 'number' && isFinite(value);
   }
 
   updateState($event: MouseEvent, stateName: string) {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.awaitility.core.ConditionTimeoutException;
 import org.eclipse.leshan.client.LeshanClient;
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.client.servers.LwM2mServer;
@@ -37,6 +39,8 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -83,9 +87,8 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.client.ResourceUpdateResult;
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
+import org.thingsboard.server.utils.PortFinder;
 
-import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -95,6 +98,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.awaitility.Awaitility.await;
 import static org.eclipse.leshan.client.object.Security.noSec;
@@ -119,6 +123,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClient
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.lwm2mClientResources;
 import static org.thingsboard.server.transport.lwm2m.ota.AbstractOtaLwM2MIntegrationTest.CLIENT_LWM2M_SETTINGS_19;
 
 @Slf4j
@@ -138,21 +143,35 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     private LwM2mClientContext clientContextTest;
 
     //  Lwm2m Server
-    public static final int port = 5685;
-    public static final int securityPort = 5686;
-    public static final int portBs = 5687;
-    public static final int securityPortBs = 5688;
+    public static final String LWM2M_HOST = "localhost";
+    public static final int LWM2M_PORT = PortFinder.findAvailableUdpPort(); // 5685
+    public static final int LWM2MS_PORT = PortFinder.findAvailableUdpPort(); //5686
 
-    public static final String host = "localhost";
-    public static final String hostBs = "localhost";
+    public static final String LWM2M_BOOTSTRAP_HOST = "localhost";
+    public static final int LWM2M_BOOTSTRAP_PORT = PortFinder.findAvailableUdpPort(); // 5687
+    public static final int LWM2MS_BOOTSTRAP_PORT = PortFinder.findAvailableUdpPort(); // 5688
+
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry registry) {
+        log.warn("transport.lwm2m.server.bind_port = {}", LWM2M_PORT);
+        registry.add("transport.lwm2m.server.bind_port", () -> LWM2M_PORT);
+        log.warn("transport.lwm2m.server.security.bind_port = {}", LWM2MS_PORT);
+        registry.add("transport.lwm2m.server.security.bind_port", () -> LWM2MS_PORT);
+
+        log.warn("transport.lwm2m.bootstrap.bind_port = {}", LWM2M_BOOTSTRAP_PORT);
+        registry.add("transport.lwm2m.bootstrap.bind_port", () -> LWM2M_BOOTSTRAP_PORT);
+        log.warn("transport.lwm2m.bootstrap.security.bind_port = {}", LWM2MS_BOOTSTRAP_PORT);
+        registry.add("transport.lwm2m.bootstrap.security.bind_port", () -> LWM2MS_BOOTSTRAP_PORT);
+    }
+
     public static final Integer shortServerId = 123;
 
     public static final String COAP = "coap://";
     public static final String COAPS = "coaps://";
-    public static final String URI = COAP + host + ":" + port;
-    public static final String SECURE_URI = COAPS + host + ":" + securityPort;
-    public static final String URI_BS = COAP + hostBs + ":" + portBs;
-    public static final String SECURE_URI_BS = COAPS + hostBs + ":" + securityPortBs;
+    public static final String URI = COAP + LWM2M_HOST + ":" + LWM2M_PORT;
+    public static final String SECURE_URI = COAPS + LWM2M_HOST + ":" + LWM2MS_PORT;
+    public static final String URI_BS = COAP + LWM2M_BOOTSTRAP_HOST + ":" + LWM2M_BOOTSTRAP_PORT;
+    public static final String SECURE_URI_BS = COAPS + LWM2M_BOOTSTRAP_HOST + ":" + LWM2MS_BOOTSTRAP_PORT;
     public static final Security SECURITY_NO_SEC = noSec(URI, shortServerId);
 
     protected final String OBSERVE_ATTRIBUTES_WITHOUT_PARAMS =
@@ -304,7 +323,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationBsSuccess = new HashSet<>(Arrays.asList(ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
     protected ScheduledExecutorService executor;
     protected LwM2MTestClient lwM2MTestClient;
-    private String[] resources;
+    private String[] resources = lwm2mClientResources;
     protected String deviceId;
     protected boolean supportFormatOnly_SenMLJSON_SenMLCBOR = false;
 
@@ -546,7 +565,9 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     }
 
     public void setResources(String[] resources) {
-        this.resources = resources;
+        if (this.resources == null || !Arrays.equals(this.resources, resources)) {
+            this.resources = resources;
+        }
     }
 
     public void createNewClient(Security security, Security securityBs, boolean isRpc,
@@ -565,12 +586,11 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         this.clientDestroy();
         lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint, resources);
 
-        try (ServerSocket socket = new ServerSocket(0)) {
-            int clientPort = socket.getLocalPort();
-            lwM2MTestClient.init(security, securityBs, clientPort, isRpc,
-                    this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest,
-                    clientDtlsCidLength, queueMode, supportFormatOnly_SenMLJSON_SenMLCBOR, value3_0_9);
-        }
+        int clientPort = PortFinder.findAvailableUdpPort();
+        //automatic client port assignment
+        lwM2MTestClient.init(security, securityBs, 0 /* clientPort */, isRpc,
+                this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest,
+                clientDtlsCidLength, queueMode, supportFormatOnly_SenMLJSON_SenMLCBOR, value3_0_9);
         lwM2MTestClient.setDeviceIdStr(deviceIdStr);
     }
 
@@ -653,10 +673,9 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         try {
             if (lwM2MTestClient != null && lwM2MTestClient.getLeshanClient() != null) {
                 boolean serverAlive = false;
-                for (int port = AbstractLwM2MIntegrationTest.port; port <= securityPortBs; port++) {
-                    try (ServerSocket socket = new ServerSocket(port)) {
-                         log.info("Port {} is free.", port);
-                    } catch (IOException e) {
+                List<Integer> ports = List.of(LWM2M_PORT, LWM2MS_PORT, LWM2MS_BOOTSTRAP_PORT, LWM2MS_BOOTSTRAP_PORT);
+                for (Integer port : ports) {
+                    if (!PortFinder.isUDPPortAvailable(port)) {
                         log.debug("Port {} is busy — CoAP server still active.", port);
                         serverAlive = true;
                         break;
@@ -725,8 +744,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         bootstrapServerCredential.setServerPublicKey("");
         bootstrapServerCredential.setShortServerId(isBootstrap ? null : shortServerId);
         bootstrapServerCredential.setBootstrapServerIs(isBootstrap);
-        bootstrapServerCredential.setHost(isBootstrap ? hostBs : host);
-        bootstrapServerCredential.setPort(isBootstrap ? portBs : port);
+        bootstrapServerCredential.setHost(isBootstrap ? LWM2M_BOOTSTRAP_HOST : LWM2M_HOST);
+        bootstrapServerCredential.setPort(isBootstrap ? LWM2M_BOOTSTRAP_PORT : LWM2M_PORT);
         return bootstrapServerCredential;
     }
 
@@ -741,11 +760,23 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         return credentials;
     }
 
-    protected  void awaitObserveReadAll(int cntObserve, String deviceIdStr) throws Exception {
-        await("ObserveReadAll: countObserve " + cntObserve)
-                .atMost(40, TimeUnit.SECONDS)
-                .until(() -> cntObserve == getCntObserveAll(deviceIdStr));
+    protected void awaitObserveReadAll(int cntObserve, String deviceIdStr) throws Exception {
+        awaitObserveReadAll(cntObserve, deviceIdStr, "");
     }
+
+    protected void awaitObserveReadAll(int cntObserve, String deviceIdStr, String assertionAlias) throws Exception {
+        try {
+            await("ObserveReadAll: countObserve " + cntObserve)
+                    .alias(assertionAlias)
+                    .atMost(TIMEOUT, TimeUnit.SECONDS)
+                    .until(() -> cntObserve == getCntObserveAll(deviceIdStr));
+        } catch (ConditionTimeoutException e) {
+            int current = getCntObserveAll(deviceIdStr);
+            log.error("Condition or device {} with alias 'ObserveReadAll: countObserve {}, but received {}", deviceIdStr, cntObserve, current);
+            throw e;
+        }
+    }
+
     protected  void awaitDeleteDevice(String deviceIdStr) throws Exception {
         await("Delete device with id:  " + deviceIdStr)
                 .atMost(40, TimeUnit.SECONDS)
@@ -754,6 +785,19 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                             .andExpect(status().isOk());
                    return HttpStatus.NOT_FOUND.value() == doGet("/api/device/" + deviceIdStr).andReturn().getResponse().getStatus();
                 });
+    }
+
+    protected void updateRegAtLeastOnceAfterAction() {
+        long initialInvocationCount = countUpdateReg();
+        AtomicLong newInvocationCount = new AtomicLong(initialInvocationCount);
+        log.trace("updateRegAtLeastOnceAfterAction: initialInvocationCount [{}]", initialInvocationCount);
+        await("Update Registration at-least-once after action")
+                .atMost(50, TimeUnit.SECONDS)
+                .until(() -> {
+                    newInvocationCount.set(countUpdateReg());
+                    return newInvocationCount.get() > initialInvocationCount;
+                });
+        log.trace("updateRegAtLeastOnceAfterAction: newInvocationCount [{}]", newInvocationCount.get());
     }
 
     protected Integer getCntObserveAll(String deviceIdStr) throws Exception {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -168,8 +168,8 @@ export class AuthService {
       ));
   }
 
-  public getUserPasswordPolicy() {
-    return this.http.get<UserPasswordPolicy>(`/api/noauth/userPasswordPolicy`, defaultHttpOptions());
+  public getUserPasswordPolicy(config?: RequestConfig) {
+    return this.http.get<UserPasswordPolicy>(`/api/noauth/userPasswordPolicy`, defaultHttpOptionsFromConfig(config));
   }
 
   public activateByEmailCode(emailCode: string): Observable<LoginResponse> {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,11 +46,15 @@ public class GeofencingZoneState {
     public GeofencingZoneState(EntityId zoneId, KvEntry entry) {
         this.zoneId = zoneId;
         if (!(entry instanceof AttributeKvEntry attributeKvEntry)) {
-            throw new IllegalArgumentException("Unsupported KvEntry type for geofencing zone state: " + entry.getClass().getSimpleName());
+            throw new IllegalArgumentException("Invalid perimeter data source for zone with id: " + zoneId + ". Perimeter definition must be stored as attribute!");
         }
         this.ts = attributeKvEntry.getLastUpdateTs();
         this.version = attributeKvEntry.getVersion();
-        this.perimeterDefinition = JacksonUtil.fromString(entry.getValueAsString(), PerimeterDefinition.class);
+        if (entry.getValueAsString() == null) {
+            throw new IllegalArgumentException("Perimeter attribute '" + entry.getKey() + "' not found for Zone with id: " + zoneId);
+        }
+        this.perimeterDefinition = JacksonUtil.fromString(entry.getValueAsString(), PerimeterDefinition.class,
+                "Invalid perimeter definition format for Zone with id: " + zoneId + ". Failed to parse attribute '" + entry.getKey() + "'");
     }
 
     public GeofencingZoneState(GeofencingZoneProto proto) {
@@ -86,11 +90,7 @@ public class GeofencingZoneState {
         // first evaluation
         if (this.lastPresence == null) {
             this.lastPresence = status;
-            GeofencingTransitionEvent transition = null;
-            if (status == GeofencingPresenceStatus.INSIDE) {
-                transition = GeofencingTransitionEvent.ENTERED;
-            }
-            return new GeofencingEvalResult(transition, status);
+            return new GeofencingEvalResult(null, status);
         }
         // State changed
         if (this.lastPresence != status) {

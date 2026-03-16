@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2025 The Thingsboard Authors
+-- Copyright © 2016-2026 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -14,35 +14,8 @@
 -- limitations under the License.
 --
 
--- UPDATE TENANT PROFILE CONFIGURATION START
+-- CALCULATED FIELD ADDITIONAL INFO ADDITION START
 
-UPDATE tenant_profile
-SET profile_data = jsonb_set(
-        profile_data,
-        '{configuration}',
-        (profile_data -> 'configuration')
-            || jsonb_strip_nulls(
-                jsonb_build_object(
-                        'minAllowedScheduledUpdateIntervalInSecForCF',
-                        CASE
-                            WHEN (profile_data -> 'configuration') ? 'minAllowedScheduledUpdateIntervalInSecForCF'
-                                THEN NULL
-                            ELSE to_jsonb(60)
-                            END,
-                        'maxRelationLevelPerCfArgument',
-                        CASE
-                            WHEN (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
-                                THEN NULL
-                            ELSE to_jsonb(10)
-                            END
-                )
-               ),
-        false
-                   )
-WHERE NOT (
-    (profile_data -> 'configuration') ? 'minAllowedScheduledUpdateIntervalInSecForCF'
-        AND
-    (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
-    );
+ALTER TABLE calculated_field ADD COLUMN IF NOT EXISTS additional_info varchar;
 
--- UPDATE TENANT PROFILE CONFIGURATION END
+-- CALCULATED FIELD ADDITIONAL INFO ADDITION END

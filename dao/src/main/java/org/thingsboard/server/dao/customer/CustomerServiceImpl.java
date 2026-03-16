@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -57,6 +57,7 @@ import org.thingsboard.server.dao.user.UserService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -143,13 +144,13 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     @Override
     @Transactional
     public Customer saveCustomer(Customer customer) {
-        return saveCustomer(customer, true, NameConflictStrategy.DEFAULT);
+        return saveCustomer(customer, NameConflictStrategy.DEFAULT);
     }
 
     @Override
     @Transactional
     public Customer saveCustomer(Customer customer, NameConflictStrategy nameConflictStrategy) {
-        return saveCustomer(customer, true, nameConflictStrategy);
+        return saveEntity(customer, () -> saveCustomer(customer, true, nameConflictStrategy));
     }
 
     private Customer saveCustomer(Customer customer, boolean doValidate) {
@@ -175,8 +176,13 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
                 countService.publishCountEntityEvictEvent(savedCustomer.getTenantId(), EntityType.CUSTOMER);
             }
             publishEvictEvent(evictEvent);
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedCustomer.getTenantId())
-                    .entityId(savedCustomer.getId()).entity(savedCustomer).created(customer.getId() == null).build());
+            eventPublisher.publishEvent(SaveEntityEvent.builder()
+                    .tenantId(savedCustomer.getTenantId())
+                    .entityId(savedCustomer.getId())
+                    .entity(savedCustomer)
+                    .oldEntity(oldCustomer)
+                    .created(customer.getId() == null)
+                    .build());
             return savedCustomer;
         } catch (Exception e) {
             handleEvictEvent(evictEvent);
@@ -273,6 +279,12 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
         log.trace("Executing deleteCustomersByTenantId, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, id -> "Incorrect tenantId " + id);
         customersByTenantRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public List<Customer> findCustomersByTenantIdAndIds(TenantId tenantId, List<CustomerId> customerIds) {
+        log.trace("Executing findCustomersByTenantIdAndIds, tenantId [{}], customerIds [{}]", tenantId, customerIds);
+        return customerDao.findCustomersByTenantIdAndIds(tenantId.getId(), customerIds.stream().map(CustomerId::getId).collect(Collectors.toList()));
     }
 
     @Override

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>4.3.0-SNAPSHOT</version>
+    <version>4.4.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -28,8 +28,8 @@
     <inceptionYear>2016</inceptionYear>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
         <main.dir>${basedir}</main.dir>
         <pkg.disabled>true</pkg.disabled>
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
@@ -38,7 +38,9 @@
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
-        <spring-boot.version>3.4.10</spring-boot.version>
+        <spring-boot.version>3.4.13</spring-boot.version>
+        <tomcat.version>10.1.52</tomcat.version> <!-- to fix CVE-2026-24734 and CVE-2025-66614. TODO: remove when fixed in spring-boot-dependencies -->
+        <jackson.version>2.18.6</jackson.version> <!-- to fix CWE-770. TODO: remove when fixed in spring-boot-dependencies -->
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jedis.version>5.1.5</jedis.version>
         <jjwt.version>0.12.5</jjwt.version>
@@ -61,16 +63,16 @@
         <leshan.version>2.0.0-M15</leshan.version>
         <mail.version>2.0.1</mail.version>
         <curator.version>5.6.0</curator.version>
-        <zookeeper.version>3.9.3</zookeeper.version>
+        <zookeeper.version>3.9.5</zookeeper.version> <!-- to fix CVE-2026-24308 and CVE-2026-24281. TODO: remove override when fixed in curator-client -->
         <protobuf.version>3.25.5</protobuf.version> <!-- A Major v4 does not support by the pubsub yet-->
-        <grpc.version>1.68.1</grpc.version>
-        <tbel.version>1.2.8</tbel.version>
-        <lombok.version>1.18.38</lombok.version>
+        <grpc.version>1.76.0</grpc.version>
+        <tbel.version>1.2.9</tbel.version>
+        <lombok.version>1.18.40</lombok.version>
         <paho.client.version>1.2.5</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
-        <surefire.version>3.2.5</surefire.version>
-        <jar-plugin.version>3.4.0</jar-plugin.version>
+        <surefire.version>3.5.4</surefire.version>
+        <jar-plugin.version>3.5.0</jar-plugin.version>
         <springdoc-swagger.version>2.8.8TB</springdoc-swagger.version>
         <swagger-annotations.version>2.2.30</swagger-annotations.version>
         <spatial4j.version>0.8</spatial4j.version>
@@ -86,6 +88,7 @@
         org.apache.kafka.common.network.NetworkReceive class in the application module. It addresses the issue https://issues.apache.org/jira/browse/KAFKA-4090.
         Here is the source to track https://github.com/apache/kafka/tree/trunk/clients/src/main/java/org/apache/kafka/common/network -->
         <kafka.version>3.9.1</kafka.version>
+        <lz4.version>1.10.1</lz4.version> <!-- to fix CVE-2025-12183 and CVE-2025-66566 introduced through kafka-clients 3.9.1 TODO: remove when kafka-clients is bumped -->
         <bucket4j.version>8.10.1</bucket4j.version>
         <antlr.version>3.5.3</antlr.version>
         <snakeyaml.version>2.2</snakeyaml.version>
@@ -101,7 +104,7 @@
 
         <passay.version>1.6.4</passay.version>
         <ua-parser.version>1.6.1</ua-parser.version>
-        <commons-beanutils.version>1.9.4</commons-beanutils.version>
+        <commons-beanutils.version>1.11.0</commons-beanutils.version>
         <commons-collections.version>4.4</commons-collections.version>
         <protobuf-dynamic.version>1.0.4TB</protobuf-dynamic.version>
         <wire-schema.version>3.7.1</wire-schema.version>
@@ -110,7 +113,8 @@
         <jakarta.el.version>4.0.2</jakarta.el.version>
         <antisamy.version>1.7.5</antisamy.version>
         <snmp4j.version>3.8.0</snmp4j.version>
-        <langchain4j.version>1.1.0</langchain4j.version>
+        <bytebuddy.version>1.18.4</bytebuddy.version>
+        <langchain4j.version>1.8.0-TB</langchain4j.version>
         <error_prone_annotations.version>2.38.0</error_prone_annotations.version>
         <animal-sniffer-annotations.version>1.24</animal-sniffer-annotations.version>
         <auto-value-annotations.version>1.11.0</auto-value-annotations.version>
@@ -118,6 +122,7 @@
         <perfmark-api.version>0.27.0</perfmark-api.version>
         <threetenbp.version>1.7.0</threetenbp.version>
         <!--         TEST SCOPE         -->
+        <assertj.version>3.27.7</assertj.version> <!-- to fix CVE-2026-24400 (XXE). TODO: remove when fixed in spring-boot-dependencies -->
         <dbunit.version>2.7.3</dbunit.version>
         <java-websocket.version>1.5.6</java-websocket.version>
         <mock-server.version>5.15.0</mock-server.version>
@@ -126,7 +131,7 @@
         <jeasy.version>5.0.0</jeasy.version>
         <!--      BLACKBOX TEST SCOPE     -->
         <testng.version>7.10.1</testng.version>
-        <testcontainers.version>1.20.6</testcontainers.version>
+        <testcontainers.version>1.21.4</testcontainers.version>
         <testcontainers-junit4-mock.version>1.0.2</testcontainers-junit4-mock.version>
         <zeroturnaround.version>1.12</zeroturnaround.version>
         <webdrivermanager.version>6.1.0</webdrivermanager.version>
@@ -146,7 +151,6 @@
         <firebase-admin.version>9.2.0</firebase-admin.version>
         <snappy.version>1.1.10.5</snappy.version>
         <rocksdbjni.version>9.10.0</rocksdbjni.version>
-        <netty.version>4.1.125.Final</netty.version> <!-- to fix CVEs. TODO: remove when fixed in spring-boot-dependencies -->
     </properties>
 
     <modules>
@@ -604,7 +608,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.11.0</version>
                     <configuration>
-                        <release>17</release>
+                        <release>25</release>
                         <compilerArgs>
                             <arg>-Xlint:deprecation</arg>
                             <arg>-Xlint:removal</arg>
@@ -633,7 +637,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.1.1</version>
+                    <version>${jar-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -648,12 +652,12 @@
                 <plugin>
                     <groupId>org.thingsboard</groupId>
                     <artifactId>gradle-maven-plugin</artifactId>
-                    <version>1.0.12</version>
+                    <version>1.0.15</version>
                 </plugin>
                 <plugin>
                     <groupId>com.github.eirslett</groupId>
                     <artifactId>frontend-maven-plugin</artifactId>
-                    <version>1.12.0</version>
+                    <version>2.0.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -661,8 +665,11 @@
                     <version>${surefire.version}</version>
                     <configuration>
                         <argLine>
-                            -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=20
-                            --add-opens java.base/java.lang.reflect=ALL-UNNAMED
+                            -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=200
+                            -XX:+EnableDynamicAgentLoading
+                            --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+                            -Dqueue.edqs.local.rocksdb_path="target/rocksdb/fork_${surefire.forkNumber}/edqs"
+                            -Dqueue.calculated_fields.rocks_db_path="target/rocksdb/fork_${surefire.forkNumber}/cf"
                         </argLine>
                     </configuration>
                 </plugin>
@@ -834,6 +841,7 @@
                             <exclude>**/test/resources/lwm2m/**</exclude>
                             <exclude>**/resources/lwm2m/models/**</exclude>
                             <exclude>src/main/data/resources/**</exclude>
+                            <exclude>.claude/**</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>
@@ -896,13 +904,43 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Temporary Tomcat version override -->
             <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-bom</artifactId>
-                <version>${netty.version}</version>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-core</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-el</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-websocket</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+            <!-- End of Tomcat version override -->
+
+            <!-- Temporary Jackson version override -->
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- End of Jackson version override -->
+
+            <!-- Temporary assertj-core version override -->
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- End of assertj-core version override -->
+
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -911,7 +949,17 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>dev.langchain4j</groupId>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy</artifactId>
+                <version>${bytebuddy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy-agent</artifactId>
+                <version>${bytebuddy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.langchain4j</groupId>
                 <artifactId>langchain4j-bom</artifactId>
                 <version>${langchain4j.version}</version>
                 <type>pom</type>
@@ -1153,6 +1201,17 @@
                 <groupId>org.apache.kafka</groupId>
                 <artifactId>kafka-clients</artifactId>
                 <version>${kafka.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.lz4</groupId>
+                        <artifactId>lz4-java</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>at.yawk.lz4</groupId>
+                <artifactId>lz4-java</artifactId>
+                <version>${lz4.version}</version> <!-- to fix CVE introduced through kafka-clients 3.9.1 -->
             </dependency>
             <dependency>
                 <groupId>com.github.springtestdbunit</groupId>
@@ -1433,6 +1492,12 @@
                 <groupId>org.apache.cassandra</groupId>
                 <artifactId>cassandra-all</artifactId>
                 <version>${cassandra-all.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.lz4</groupId>
+                        <artifactId>lz4-java</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.testng</groupId>
@@ -1909,6 +1974,10 @@
             <url>https://repo1.maven.org/maven2/</url>
         </repository>
         <repository>
+            <id>thingsboard-public-repo</id>
+            <url>https://repo.thingsboard.io/artifactory/libs-release-public</url>
+        </repository>
+        <repository>
             <id>spring-snapshots</id>
             <name>Spring Snapshots</name>
             <url>https://repo.spring.io/snapshot</url>
@@ -1931,4 +2000,10 @@
         </repository>
     </repositories>
 
+    <pluginRepositories>
+        <pluginRepository>
+            <id>thingsboard-repo</id>
+            <url>https://repo.thingsboard.io/artifactory/libs-release-public</url>
+        </pluginRepository>
+    </pluginRepositories>
 </project>
